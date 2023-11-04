@@ -1,6 +1,6 @@
 import json
 import os
-
+#Replace this value with the directory of your json File
 #directory = (r"C:\Users\Meelf\OneDrive\Desktop\coding_task")
 
 def analyze_log(directory):
@@ -20,17 +20,18 @@ def analyze_log(directory):
     data = {}
     WheelTickMsg = log_data['WheelTickMsg']
     ALLValues = WheelTickMsg['values']
-
+    l3 = []
 
     #print(ALLValues)
 
     for valu in ALLValues:
         packet = valu['data']
+
         if sequence_counter == -1:
             sequence_counter = packet['SQC_Whl_Msg']
         else:
              NUM_OF_LOST_PACKETS = (packet['SQC_Whl_Msg'] - (sequence_counter +1))%256
-             print (NUM_OF_LOST_PACKETS,packet['SQC_Whl_Msg'],sequence_counter)
+             #print (NUM_OF_LOST_PACKETS,packet['SQC_Whl_Msg'],sequence_counter)
              sequence_counter = packet['SQC_Whl_Msg']
              if (NUM_OF_LOST_PACKETS > 1):  #case of multiple packets lost
                  lost_packets += NUM_OF_LOST_PACKETS
@@ -49,12 +50,14 @@ def analyze_log(directory):
                  lost_packets += 1
                  drop_timestamps.append (valu['timestamp']-20)
                  drop_sequence.append(sequence_counter-1)
+    for  i in range (lost_packets):
+           l3.append({"SQC_Whl_Msg":drop_sequence[i],"timestamp":drop_timestamps[i]})
 
-    return lost_packets, drop_timestamps,drop_sequence
+    return lost_packets, drop_timestamps,drop_sequence,l3
 
 
-
-lost_packets, drop_timestamps,drop_sequences = analyze_log(directory)
+lost_packets, drop_timestamps,drop_sequences,l3 = analyze_log(directory)
 print('Total number of lost packets:', lost_packets)
 print('Timestamps for each drop:', drop_timestamps)
 print('Sequence  for each drop:', drop_sequences)
+print('MISSING Drop Result  :', l3)
