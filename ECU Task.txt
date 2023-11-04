@@ -1,0 +1,60 @@
+import json
+import os
+
+#directory = (r"C:\Users\Meelf\OneDrive\Desktop\coding_task")
+
+def analyze_log(directory):
+    for filename in os.listdir(directory):
+        if filename.endswith('.json'):
+            with open(os.path.join(directory, filename)) as f:
+                log_data = json.load(f)
+                # print(log_data)
+    lost_packets = 0
+    TimeStamp = -1
+    NUM_OF_LOST_PACKETS = 0
+    sequence_counter = -1
+    drop_timestamps = []
+    drop_sequence = []
+    WheelTickMsg = []
+    values = []
+    data = {}
+    WheelTickMsg = log_data['WheelTickMsg']
+    ALLValues = WheelTickMsg['values']
+
+
+    #print(ALLValues)
+
+    for valu in ALLValues:
+        packet = valu['data']
+        if sequence_counter == -1:
+            sequence_counter = packet['SQC_Whl_Msg']
+        else:
+             NUM_OF_LOST_PACKETS = (packet['SQC_Whl_Msg'] - (sequence_counter +1))%256
+             print (NUM_OF_LOST_PACKETS,packet['SQC_Whl_Msg'],sequence_counter)
+             sequence_counter = packet['SQC_Whl_Msg']
+             if (NUM_OF_LOST_PACKETS > 1):  #case of multiple packets lost
+                 lost_packets += NUM_OF_LOST_PACKETS
+                 Time = valu['timestamp']-((lost_packets)*20)
+                 #drop_timestamps.append (valu['timestamp'])
+                 while (NUM_OF_LOST_PACKETS != 0):
+
+                     drop_timestamps.append (Time+20)
+                     drop_sequence.append (sequence_counter - NUM_OF_LOST_PACKETS)
+                     Time =Time+20
+                     NUM_OF_LOST_PACKETS = NUM_OF_LOST_PACKETS - 1
+
+
+
+             elif(NUM_OF_LOST_PACKETS == 1):  #case of 1 lost packet
+                 lost_packets += 1
+                 drop_timestamps.append (valu['timestamp']-20)
+                 drop_sequence.append(sequence_counter-1)
+
+    return lost_packets, drop_timestamps,drop_sequence
+
+
+
+lost_packets, drop_timestamps,drop_sequences = analyze_log(directory)
+print('Total number of lost packets:', lost_packets)
+print('Timestamps for each drop:', drop_timestamps)
+print('Sequence  for each drop:', drop_sequences)
