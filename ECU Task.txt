@@ -4,13 +4,9 @@ import os
 #directory = (r"C:\Users\Meelf\OneDrive\Desktop\coding_task")
 
 def analyze_log(directory):
-    for filename in os.listdir(directory):
-        if filename.endswith('.json'):
-            with open(os.path.join(directory, filename)) as f:
-                log_data = json.load(f)
-                # print(log_data)
     lost_packets = 0
     TimeStamp = -1
+    Total_num: int = 0
     NUM_OF_LOST_PACKETS = 0
     sequence_counter = -1
     drop_timestamps = []
@@ -18,15 +14,22 @@ def analyze_log(directory):
     WheelTickMsg = []
     values = []
     data = {}
+    l3 = []
+
+    for filename in os.listdir(directory):
+        if filename.endswith('.json'):
+            with open(os.path.join(directory, filename)) as f:
+                log_data = json.load(f)
+                # print(log_data)
+
     WheelTickMsg = log_data['WheelTickMsg']
     ALLValues = WheelTickMsg['values']
-    l3 = []
 
     #print(ALLValues)
 
     for valu in ALLValues:
         packet = valu['data']
-
+        Total_num =Total_num+1
         if sequence_counter == -1:
             sequence_counter = packet['SQC_Whl_Msg']
         else:
@@ -52,12 +55,15 @@ def analyze_log(directory):
                  drop_sequence.append(sequence_counter-1)
     for  i in range (lost_packets):
            l3.append({"SQC_Whl_Msg":drop_sequence[i],"timestamp":drop_timestamps[i]})
+    percent_of_lost_pack = (lost_packets/Total_num )* 100
+    rounded_num = "{:.2f}".format (percent_of_lost_pack)
 
-    return lost_packets, drop_timestamps,drop_sequence,l3
+    return lost_packets, drop_timestamps,drop_sequence,l3,rounded_num
 
 
-lost_packets, drop_timestamps,drop_sequences,l3 = analyze_log(directory)
+lost_packets, drop_timestamps,drop_sequences,l3 ,percent_of_lost_pack = analyze_log(directory)
 print('Total number of lost packets:', lost_packets)
+print('Percentage of Lost Packages: {0}%'.format(percent_of_lost_pack))
 print('Timestamps for each drop:', drop_timestamps)
 print('Sequence  for each drop:', drop_sequences)
 print('MISSING Drop Result  :', l3)
